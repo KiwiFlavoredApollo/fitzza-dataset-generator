@@ -1,4 +1,4 @@
-class MusinsaProductCrawler:
+class MusinsaProductInformationSpider:
     BASE_URL = "https://musinsa.com/products/"
 
     def __init__(self):
