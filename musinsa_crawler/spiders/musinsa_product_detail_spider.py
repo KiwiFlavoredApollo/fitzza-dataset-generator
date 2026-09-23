@@ -1,8 +1,11 @@
 import json
+import sys
 from pathlib import Path
 from typing import Any, AsyncIterator, Generator, AsyncGenerator
+from urllib.parse import urlparse
 
 import scrapy
+from bs4 import BeautifulSoup
 from scrapy import Request
 from scrapy.http import Response
 
@@ -134,19 +137,29 @@ class MusinsaProductDetailSpider(scrapy.Spider):
         soup = BeautifulSoup(data["goods_contents"], "html.parser")
 
         return [
-            img["src"]
+            self.normalize_image_url(img["src"])
             for img in soup.find_all("img")
             if img.get("src")
         ]
 
+    def normalize_image_url(self, url: str) -> str:
+        if url.startswith("//"):
+            return "https:" + url
+
+        return url
+
     def save_content_images(self, response: Response, data: object, output: Path) -> None:
-        output = output / f"{data["goods_no"]}" / "content_images"
-        output.mkdir(parents=True, exist_ok=True)
+        try:
+            output = output / f"{data["goods_no"]}" / "content_images"
+            output.mkdir(parents=True, exist_ok=True)
 
-        filename: str = response.url.split("/")[-1]
+            filename = Path(urlparse(response.url).path).name
 
-        with open(output / filename, "wb") as file:
-            file.write(response.body)
+            with open(output / filename, "wb") as file:
+                file.write(response.body)
+
+        except (ValueError, OSError) as e:
+            print(f"본문 이미지 다운로드 실패: {data["goods_no"]}", file=sys.stderr)
 
     def download_product_details(self, data: object, output: Path) -> None:
         output = output / f"{data["goods_no"]}"
