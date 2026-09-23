@@ -70,15 +70,14 @@ class MusinsaProductDetailSpider(scrapy.Spider):
 
         # yield from self.download_thumbnail_images(data, output)
 
-        yield from self.download_goods_images(data, output)
+        # yield from self.download_goods_images(data, output)
 
-        # self.download_content_images(data, output)
+        yield from self.download_content_images(data, output)
 
         # self.download_product_details(data, output)
 
     def download_thumbnail_images(self, data: object, output: Path) -> Generator[Request, None, None]:
         url: str = f"{self.IMAGE_BASE_URL}{data["thumbnail_image_url"]}"
-        print(url)
 
         yield scrapy.Request(
             url,
@@ -101,7 +100,6 @@ class MusinsaProductDetailSpider(scrapy.Spider):
     def download_goods_images(self, data: object, output: Path) -> Generator[Request, None, None]:
         for image in data["goods_images"]:
             url: str = f"{self.IMAGE_BASE_URL}{image["image_url"]}"
-            print(url)
 
             yield scrapy.Request(
                 url,
@@ -121,8 +119,34 @@ class MusinsaProductDetailSpider(scrapy.Spider):
         with open(output / filename, "wb") as file:
             file.write(response.body)
 
-    def download_content_images(self, data: object, output: Path) -> None:
-        print(data["goods_contents"])
+    def download_content_images(self, data: object, output: Path) -> Generator[Request, None, None]:
+        for url in self.get_content_image_urls(data):
+            yield scrapy.Request(
+                url,
+                callback=self.save_content_images,
+                cb_kwargs={
+                    "data": data,
+                    "output": output
+                },
+            )
+
+    def get_content_image_urls(self, data: object) -> list[str]:
+        soup = BeautifulSoup(data["goods_contents"], "html.parser")
+
+        return [
+            img["src"]
+            for img in soup.find_all("img")
+            if img.get("src")
+        ]
+
+    def save_content_images(self, response: Response, data: object, output: Path) -> None:
+        output = output / f"{data["goods_no"]}" / "content_images"
+        output.mkdir(parents=True, exist_ok=True)
+
+        filename: str = response.url.split("/")[-1]
+
+        with open(output / filename, "wb") as file:
+            file.write(response.body)
 
     def download_product_details(self, data: object, output: Path) -> None:
         output = output / f"{data["goods_no"]}"
