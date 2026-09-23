@@ -1,4 +1,4 @@
-from musinsa_crawler import MusinsaCrawler
+from musinsa_category_crawler import MusinsaCategoryCrawler
 
 if __name__ == "__main__":
-    MusinsaCrawler().run()
+    MusinsaCategoryCrawler().parse()
