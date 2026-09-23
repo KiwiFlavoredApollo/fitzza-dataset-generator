@@ -1,0 +1,9 @@
+torch>=2.2
+transformers>=4.45
+Pillow>=10.2
+numpy>=1.26
+aiohttp>=3.9
+tqdm>=4.66
+safetensors>=0.4
+
+torchvision>=0.20
