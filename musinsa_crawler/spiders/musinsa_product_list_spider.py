@@ -17,7 +17,7 @@ class MusinsaProductListSpider(scrapy.Spider):
     ## 특이사항
     - 웹브라우저 개발자도구의 네트워크 탭을 조사하면서 API URL을 얻었습니다. 
     - data.pagination.nextPageUrl을 통해 다음 페이지를 가져올 수 있습니다.
-    - size를 예를 들어 200로 크게 설정하면 안됩니다.
+    - size를 예를 들어 200로 크게 설정하면 오류가 발생합니다.
     - hmacId가 페이지 마다 다릅니다.
     """
     PARAMETERS: dict = {
