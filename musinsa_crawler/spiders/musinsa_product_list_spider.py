@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Self, Any
+from typing import Self, Any, AsyncIterator
 from urllib.parse import urlencode
 
 import scrapy
@@ -38,7 +38,7 @@ class MusinsaProductListSpider(scrapy.Spider):
         self.category = category
         self.output = output
 
-    async def start(self):
+    async def start(self) -> AsyncIterator[Any]:
         url = (
             f"{self.BASE_URL}"
             f"?{urlencode(self.PARAMETERS)}"
