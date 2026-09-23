@@ -47,7 +47,7 @@ class MusinsaProductListSpider(scrapy.Spider):
 
         yield scrapy.Request(url)
 
-    def parse(self, response: Response, **kwargs: Any) -> Self:
+    def parse(self, response: Response, **kwargs: Any) -> Any:
         try:
             loaded = json.loads(response.body)
             products = loaded["data"]["list"]
