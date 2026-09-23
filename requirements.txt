@@ -9,3 +9,4 @@ safetensors>=0.4
 torchvision>=0.20
 
 scrapy
+rembg
