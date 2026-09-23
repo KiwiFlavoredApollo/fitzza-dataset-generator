@@ -49,4 +49,10 @@ class MusinsaProductListSpider(scrapy.Spider):
         pass
 
     def get_categories(self) -> list[str]:
-        return [TOPS, OUTERWEAR, BOTTOMS, HEADWEAR, ACTIVEWEAR]
+        return [
+            TOPS,
+            OUTERWEAR,
+            BOTTOMS,
+            HEADWEAR,
+            ACTIVEWEAR
+        ]
