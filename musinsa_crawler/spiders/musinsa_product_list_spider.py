@@ -33,16 +33,16 @@ class MusinsaProductListSpider(scrapy.Spider):
 
     name = "musinsa_product_list_spider"
 
-    def __init__(self, category: str, output: Path,  **kwargs: Any) -> None:
+    def __init__(self, category: object, output: Path,  **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self.category = category
+        self.category: object = category
         self.output: Path = output / "product_list"
 
     async def start(self):
         url = (
             f"{self.BASE_URL}"
             f"?{urlencode(self.PARAMETERS)}"
-            f"&category={self.category}"
+            f"&category={self.category["code"]}"
         )
 
         yield scrapy.Request(url)
@@ -55,7 +55,7 @@ class MusinsaProductListSpider(scrapy.Spider):
 
             self.output.mkdir(parents=True, exist_ok=True)
 
-            with open(self.output / f"{self.category}.jsonl", "w", encoding="UTF-8") as file:
+            with open(self.output / f"{self.category["name"]}.jsonl", "w", encoding="UTF-8") as file:
                 for product in products:
                     file.write(json.dumps(product, ensure_ascii=False) + "\n")
 
