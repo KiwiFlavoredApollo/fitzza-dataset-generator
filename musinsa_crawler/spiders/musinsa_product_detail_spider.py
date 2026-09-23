@@ -68,12 +68,12 @@ class MusinsaProductDetailSpider(scrapy.Spider):
 
         output: Path = self.output / "product_detail" / self.category["name"]
 
-        yield from self.download_thumbnail_images(data, output)
+        # yield from self.download_thumbnail_images(data, output)
 
-        # self.download_goods_images(data, output)
-        #
+        yield from self.download_goods_images(data, output)
+
         # self.download_content_images(data, output)
-        #
+
         # self.download_product_details(data, output)
 
     def download_thumbnail_images(self, data: object, output: Path) -> Generator[Request, None, None]:
@@ -98,8 +98,28 @@ class MusinsaProductDetailSpider(scrapy.Spider):
         with open(output / filename, "wb") as file:
             file.write(response.body)
 
-    def download_goods_images(self, data: object, output: Path) -> None:
-        print(data["goods_images"])
+    def download_goods_images(self, data: object, output: Path) -> Generator[Request, None, None]:
+        for image in data["goods_images"]:
+            url: str = f"{self.IMAGE_BASE_URL}{image["image_url"]}"
+            print(url)
+
+            yield scrapy.Request(
+                url,
+                callback=self.save_goods_images,
+                cb_kwargs={
+                    "data": data,
+                    "output": output
+                },
+            )
+
+    def save_goods_images(self, response: Response, data: object, output: Path) -> None:
+        output = output / f"{data["goods_no"]}" / "goods_images"
+        output.mkdir(parents=True, exist_ok=True)
+
+        filename: str = response.url.split("/")[-1]
+
+        with open(output / filename, "wb") as file:
+            file.write(response.body)
 
     def download_content_images(self, data: object, output: Path) -> None:
         print(data["goods_contents"])
