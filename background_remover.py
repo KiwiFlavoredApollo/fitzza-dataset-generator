@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 
-from rembg import remove
+import rembg
 
 INPUT = Path("output/product_detail")
 OUTPUT = Path("output/fashion_clip_images")
@@ -26,9 +26,13 @@ class BackgroundRemover:
             output_path: Path = Path(str.replace(str(input_path), str(self.input), str(self.output)))
             output_path = Path(re.sub(r"\.(?:jpg|jpeg)", ".png", str(output_path), flags=re.IGNORECASE))
 
+            session = rembg.new_session(
+                providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
+            )
+
             with open(input_path, "rb") as input_file:
                 input_bytes = input_file.read()
-                output_bytes = remove(input_bytes)
+                output_bytes = rembg.remove(input_bytes, session=session)
 
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
