@@ -35,8 +35,8 @@ class MusinsaProductListSpider(scrapy.Spider):
 
     def __init__(self, category: object, output: Path,  **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self.category: object = category
-        self.output: Path = output / "product_list"
+        self.category = category
+        self.output = output
 
     async def start(self):
         url = (
@@ -53,9 +53,10 @@ class MusinsaProductListSpider(scrapy.Spider):
             products = loaded["data"]["list"]
             products = convert_keys(products)
 
-            self.output.mkdir(parents=True, exist_ok=True)
+            output = self.output / "product_list"
+            output.mkdir(parents=True, exist_ok=True)
 
-            with open(self.output / f"{self.category["name"]}.jsonl", "w", encoding="UTF-8") as file:
+            with open(output / f"{self.category["name"]}.jsonl", "w", encoding="UTF-8") as file:
                 for product in products:
                     file.write(json.dumps(product, ensure_ascii=False) + "\n")
 
