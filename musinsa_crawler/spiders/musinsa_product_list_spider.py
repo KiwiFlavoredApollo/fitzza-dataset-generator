@@ -1,10 +1,12 @@
-from typing import Self
+import json
+from pathlib import Path
+from typing import Self, Any
 from urllib.parse import urlencode
 
 import scrapy
 from scrapy.http import Response
 
-from musinsa_crawler.musinsa.categories import *
+from camel_to_snake import convert_keys
 
 
 class MusinsaProductListSpider(scrapy.Spider):
@@ -31,28 +33,33 @@ class MusinsaProductListSpider(scrapy.Spider):
 
     name = "musinsa_product_list_spider"
 
+    def __init__(self, category: str, output: Path,  **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.category = category
+        self.output: Path = output / "product_list"
+
     async def start(self):
-        for category in self.get_categories():
-            url = (
-                f"{self.BASE_URL}"
-                f"?{urlencode(self.PARAMETERS)}"
-                f"&category={category}"
-            )
+        url = (
+            f"{self.BASE_URL}"
+            f"?{urlencode(self.PARAMETERS)}"
+            f"&category={self.category}"
+        )
 
-            yield scrapy.Request(url)
+        yield scrapy.Request(url)
 
-    def parse(self, response: Response, **kwargs) -> Self:
-        # products = response.css('a[class^="GoodsItem"]')
-        #
-        # for product in products[:self.COUNTS]:
-        #     product.css('::attr(href)').get()
-        pass
+    def parse(self, response: Response, **kwargs: Any) -> Self:
+        try:
+            loaded = json.loads(response.body)
+            products = loaded["data"]["list"]
+            products = convert_keys(products)
 
-    def get_categories(self) -> list[str]:
-        return [
-            TOPS,
-            OUTERWEAR,
-            BOTTOMS,
-            HEADWEAR,
-            ACTIVEWEAR
-        ]
+            self.output.mkdir(parents=True, exist_ok=True)
+
+            with open(self.output / f"{self.category}.jsonl", "w", encoding="UTF-8") as file:
+                for product in products:
+                    file.write(json.dumps(product, ensure_ascii=False) + "\n")
+
+            next_page_url: str = loaded["data"]["pagination"]["nextPageUrl"]
+
+        except KeyError:
+            pass
