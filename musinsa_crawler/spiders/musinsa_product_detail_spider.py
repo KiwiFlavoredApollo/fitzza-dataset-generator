@@ -10,7 +10,8 @@ from camel_to_snake import camel_to_snake, convert_keys
 
 
 class MusinsaProductDetailSpider(scrapy.Spider):
-    BASE_URL = "https://goods-detail.musinsa.com/api2/goods"
+    DETAIL_BASE_URL = "https://goods-detail.musinsa.com/api2/goods"
+    IMAGE_BASE_URL = "https://image.msscdn.net/thumbnails"
 
     name = "musinsa_product_detail_spider"
 
@@ -56,32 +57,58 @@ class MusinsaProductDetailSpider(scrapy.Spider):
                 products.append(json.loads(line))
 
         for product in products:
-            url: str = f"{self.BASE_URL}/{product['goods_no']}"
+            url: str = f"{self.DETAIL_BASE_URL}/{product['goods_no']}"
 
             yield scrapy.Request(url)
 
     def parse(self, response: Response, **kwargs: Any) -> Any:
-        output: Path = self.output / "product_detail" / self.category["name"]
-
-        self.download_thumbnail_images(response, output)
-
-        self.download_content_images(response, output)
-
-        self.download_product_details(response, output)
-
-    def download_thumbnail_images(self, response: Response, output: Path) -> None:
-        pass
-
-    def download_content_images(self, response: Response, output: Path) -> None:
-        pass
-
-    def download_product_details(self, response: Response, output: Path) -> None:
         loaded = json.loads(response.body)
         data = loaded["data"]
         data = convert_keys(data)
 
+        output: Path = self.output / "product_detail" / self.category["name"]
+
+        yield from self.download_thumbnail_images(data, output)
+
+        # self.download_goods_images(data, output)
+        #
+        # self.download_content_images(data, output)
+        #
+        # self.download_product_details(data, output)
+
+    def download_thumbnail_images(self, data: object, output: Path) -> Generator[Request, None, None]:
+        url: str = f"{self.IMAGE_BASE_URL}{data["thumbnail_image_url"]}"
+        print(url)
+
+        yield scrapy.Request(
+            url,
+            callback=self.save_thumbnail_images,
+            cb_kwargs={
+                "data": data,
+                "output": output
+            },
+        )
+
+    def save_thumbnail_images(self, response: Response, data: object, output: Path) -> None:
+        output = output / f"{data["goods_no"]}" / "thumbnail_images"
+        output.mkdir(parents=True, exist_ok=True)
+
+        filename: str = response.url.split("/")[-1]
+
+        with open(output / filename, "wb") as file:
+            file.write(response.body)
+
+    def download_goods_images(self, data: object, output: Path) -> None:
+        print(data["goods_images"])
+
+    def download_content_images(self, data: object, output: Path) -> None:
+        print(data["goods_contents"])
+
+    def download_product_details(self, data: object, output: Path) -> None:
         output = output / f"{data["goods_no"]}"
         output.mkdir(parents=True, exist_ok=True)
 
-        with open(output / f"{data["goods_no"]}.json", "w", encoding="UTF-8") as file:
+        filename = f"{data["goods_no"]}.json"
+
+        with open(output / filename, "w", encoding="UTF-8") as file:
             json.dump(data, file, ensure_ascii=False, indent=2)
