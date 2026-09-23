@@ -31,3 +31,14 @@ if __name__ == "__main__":
         )
 
     process.start()
+
+    # process = CrawlerProcess(get_project_settings())
+    #
+    # for category in CATEGORIES:
+    #     process.crawl(
+    #         MusinsaProductListSpider,
+    #         category=category,
+    #         output=OUTPUT
+    #     )
+    #
+    # process.start()
