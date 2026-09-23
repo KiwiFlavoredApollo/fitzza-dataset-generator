@@ -71,13 +71,13 @@ class MusinsaProductDetailSpider(scrapy.Spider):
 
         output: Path = self.output / "product_detail" / self.category["name"]
 
-        # yield from self.download_thumbnail_images(data, output)
+        yield from self.download_thumbnail_images(data, output)
 
-        # yield from self.download_goods_images(data, output)
+        yield from self.download_goods_images(data, output)
 
         yield from self.download_content_images(data, output)
 
-        # self.download_product_details(data, output)
+        self.download_product_details(data, output)
 
     def download_thumbnail_images(self, data: object, output: Path) -> Generator[Request, None, None]:
         url: str = f"{self.IMAGE_BASE_URL}{data["thumbnail_image_url"]}"
