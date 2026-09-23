@@ -1,0 +1,87 @@
+import json
+from pathlib import Path
+from typing import Any, AsyncIterator, Generator, AsyncGenerator
+
+import scrapy
+from scrapy import Request
+from scrapy.http import Response
+
+from camel_to_snake import camel_to_snake, convert_keys
+
+
+class MusinsaProductDetailSpider(scrapy.Spider):
+    BASE_URL = "https://goods-detail.musinsa.com/api2/goods"
+
+    name = "musinsa_product_detail_spider"
+
+    """
+    ## 같은 종류의 옷이라도 색이 다르다면 다른 상품 아이디를 부여합니다.
+    - 모두의 에센셜 블루종 자켓 체크 - https://www.musinsa.com/products/7161041
+    - 모두의 에센셜 블루종 자켓 스웨이드 - https://www.musinsa.com/products/7291736
+    
+    ## 색이 달라도 같은 종류의 옷이면 같은 상품 아이디를 부여합니다.
+    - 워시드 배럴 다트 코튼 팬츠 4 Color - https://www.musinsa.com/products/7122619 
+    
+    
+    ## 상세정보
+    - https://goods-detail.musinsa.com/api2/goods/7122619
+    
+    ## 태그
+    - https://goods-detail.musinsa.com/api2/goods/7122619/tags
+    
+    ## 문의
+    https://goods-detail.musinsa.com/api2/goods/7122619/question-and-answer?isExceptedSecret=false
+    
+    ## 리뷰
+    https://goods.musinsa.com/api2/review/v1/view/list?page=0&pageSize=10&goodsNo=7122619&sort=up_cnt_desc&selectedSimilarNo=7122619&myFilter=false&hasPhoto=false&isExperience=false
+    
+    ## 특이사항
+    대문자, 숫자, 언더스코어, 하이픈 만으로 구성된 키는 스네이크케이스로 변환하지 않습니다.
+    - feature_flags
+    - slow_rollout_flags
+    """
+
+    def __init__(self, category: object, input: Path, output: Path, **kwargs: Any):
+        super().__init__(**kwargs)
+        self.category = category
+        self.input = input
+        self.output = output
+
+    async def start(self, **kwargs: Any) -> AsyncIterator[Any]:
+        filename = self.input / "product_list" / f"{self.category["name"]}.jsonl"
+        products = list()
+
+        with open(filename, "r", encoding="UTF-8") as file:
+            for line in file:
+                products.append(json.loads(line))
+
+        for product in products:
+            url: str = f"{self.BASE_URL}/{product['goods_no']}"
+
+            yield scrapy.Request(url)
+
+    def parse(self, response: Response, **kwargs: Any) -> Any:
+        output: Path = self.output / "product_detail" / self.category["name"]
+
+        self.download_thumbnail_images(response, output)
+
+        self.download_content_images(response, output)
+
+        self.download_product_details(response, output)
+
+    def download_thumbnail_images(self, response: Response, output: Path) -> None:
+        pass
+
+    def download_content_images(self, response: Response, output: Path) -> None:
+        pass
+
+    def download_product_details(self, response: Response, output: Path) -> None:
+        loaded = json.loads(response.body)
+        data = loaded["data"]
+        data = convert_keys(data)
+
+        output = output / f"{data["goods_no"]}"
+        output.mkdir(parents=True, exist_ok=True)
+
+        with open(output / f"{data["goods_no"]}.json", "w", encoding="UTF-8") as file:
+            json.dump(data, file, ensure_ascii=False, indent=2)

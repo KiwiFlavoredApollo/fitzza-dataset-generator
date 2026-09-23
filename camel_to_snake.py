@@ -2,7 +2,10 @@ import re
 
 
 def camel_to_snake(name: str) -> str:
-    return re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
+    if re.fullmatch(r"[A-Z0-9_-]+", name):
+        return name
+    else:
+        return re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
 
 
 def convert_keys(data):
