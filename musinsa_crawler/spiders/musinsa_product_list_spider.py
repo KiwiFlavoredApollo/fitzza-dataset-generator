@@ -29,7 +29,7 @@ class MusinsaProductListSpider(scrapy.Spider):
         "hmacId": "1825e8016080aa31f6813eb000ece8009c81d2052350e598da7509934cf551ad",
     }
 
-    name = "musinsa_product_list_crawler"
+    name = "musinsa_product_list_spider"
 
     async def start(self):
         for category in self.get_categories():
