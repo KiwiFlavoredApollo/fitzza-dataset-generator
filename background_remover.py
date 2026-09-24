@@ -1,4 +1,5 @@
 import re
+import time
 from pathlib import Path
 
 import rembg
@@ -25,6 +26,8 @@ class BackgroundRemover:
         if not str(input).lower().endswith((".jpg", ".jpeg", ".png")):
             return
 
+        start = time.perf_counter()
+
         output: Path = Path(str.replace(str(input), str(self.input), str(self.output)))
         output = Path(re.sub(r"\.(?:jpg|jpeg)", ".png", str(output), flags=re.IGNORECASE))
 
@@ -41,7 +44,9 @@ class BackgroundRemover:
         with open(output, "wb") as output_file:
             output_file.write(output_bytes)
 
-        print(f"작업완료: {output}")
+        elapsed = time.perf_counter() - start
+
+        print(f"작업완료: {output} ({elapsed:.3f}초)")
 
 
 if __name__ == "__main__":
