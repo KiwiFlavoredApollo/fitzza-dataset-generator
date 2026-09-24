@@ -16,11 +16,17 @@ class BackgroundRemover:
     def run(self):
         for category in self.input.iterdir():
             for goods_no in category.iterdir():
-                for image in (goods_no / "thumbnail_images").iterdir():
-                    self.remove_background(image)
+                try:
+                    for image in (goods_no / "thumbnail_images").iterdir():
+                        self.remove_background(image)
+                except FileNotFoundError:
+                    pass
 
-                for image in (goods_no / "goods_images").iterdir():
-                    self.remove_background(image)
+                try:
+                    for image in (goods_no / "goods_images").iterdir():
+                        self.remove_background(image)
+                except FileNotFoundError:
+                    pass
 
     def remove_background(self, input: Path) -> None:
         if not str(input).lower().endswith((".jpg", ".jpeg", ".png")):
